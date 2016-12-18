@@ -62,6 +62,6 @@ class DropboxSendspaceSync(object):
     def _create_files(self):
         for file_to_create in self.files_to_create:
             print '[CREATE] {}'.format(file_to_create)
-            file_content = self._dropbox.download(file_to_create.path)
-            file_id = self._sendspace.upload(file_to_create.name, file_content)
+            file_stream = self._dropbox.download(file_to_create.path)
+            file_id = self._sendspace.upload(file_to_create.name, file_stream)
             self._sendspace.move_file_to_folder(file_id, file_to_create.folder.sendspace_id)

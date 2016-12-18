@@ -3,8 +3,8 @@ import requests
 from model import File, Folder
 
 
-def post_request(url, headers=None, json=None, params=None, files=None, data=None):
-    r = requests.post(url, headers=headers, json=json, params=params, files=files, data=data)
+def post_request(url, headers=None, json=None, params=None, files=None, data=None, stream=False):
+    r = requests.post(url, headers=headers, json=json, params=params, files=files, data=data, stream=stream)
 
     if r.status_code != 200:
         http_error_msg = '%s %s Error message: %s' % (r.status_code, r.reason, r.content)
@@ -36,7 +36,7 @@ class DropboxClient(object):
         url = self._build_url('download', is_content_url=True)
         headers = self._build_headers({'Dropbox-API-Arg': '{"path": "%s"}' % path})
 
-        return post_request(url, headers=headers).content
+        return post_request(url, headers=headers, stream=True).raw
 
     def list_folder(self, path='/', recursive=False):
         url = self._build_url('list_folder')

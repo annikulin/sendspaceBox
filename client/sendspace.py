@@ -1,6 +1,7 @@
 import hashlib
 import xml.etree.ElementTree as ET
 
+from requests_toolbelt import MultipartEncoder
 import requests
 
 from client.model import Folder, File
@@ -62,7 +63,7 @@ class SendspaceClient(object):
         response = post_request(self._API_URL, params=payload)
         self._session_key = response[0].text
 
-    def upload(self, filename, file):
+    def upload(self, filename, file_stream):
         payload = {'method': 'upload.getinfo', 'session_key': self._session_key}
         response = post_request(self._API_URL, params=payload)
 
@@ -71,10 +72,14 @@ class SendspaceClient(object):
         upload_identifier = response[0].attrib['upload_identifier']
         extra_info = response[0].attrib['extra_info']
 
-        form_details = {'MAX_FILE_SIZE': max_file_size, 'UPLOAD_IDENTIFIER': upload_identifier,
-                        'extra_info': extra_info, 'notify_uploader': 0}
-        file = {'userfile': (filename, file)}
-        response = post_request(url, data=form_details, files=file, expect_xml_response=False)
+        form_details = MultipartEncoder(fields={
+            'MAX_FILE_SIZE': max_file_size,
+            'UPLOAD_IDENTIFIER': upload_identifier,
+            'extra_info': extra_info,
+            'userfile': (filename, file_stream.read()),
+            'notify_uploader': '0'
+        })
+        response = post_request(url, data=form_details, expect_xml_response=False, headers={'Content-Type': form_details.content_type})
         file_id = find_between(response, 'file_id=', '\n')
         return file_id
 
