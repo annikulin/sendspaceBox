@@ -1,4 +1,4 @@
-from client.model import Folder, File
+from client.model import Folder
 
 
 class DropboxSendspaceSync(object):
@@ -17,6 +17,8 @@ class DropboxSendspaceSync(object):
         self._create_files()
 
     def _sync_folder(self, folder):
+        print 'Syncing {}'.format(folder)
+
         dropbox_folders, dropbox_files = self._dropbox.list_folder(folder.path)
         sendspace_folders, sendspace_files = self._sendspace.get_folder_content(folder.sendspace_id)
 
@@ -61,4 +63,5 @@ class DropboxSendspaceSync(object):
         for file_to_create in self.files_to_create:
             print '[CREATE] {}'.format(file_to_create)
             file_content = self._dropbox.download(file_to_create.path)
-            self._sendspace.upload(file_to_create.name, file_content)
+            file_id = self._sendspace.upload(file_to_create.name, file_content)
+            self._sendspace.move_file_to_folder(file_id, file_to_create.folder.sendspace_id)

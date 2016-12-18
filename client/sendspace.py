@@ -27,6 +27,15 @@ def post_request(url, headers=None, json=None, params=None, files=None, data=Non
     return response
 
 
+def find_between(s, first, last):
+    try:
+        start = s.index(first) + len(first)
+        end = s.index(last, start)
+        return s[start:end]
+    except ValueError:
+        return ''
+
+
 class SendspaceClient(object):
     _API_VERSION = 1.2
     _API_URL = 'http://api.sendspace.com/rest/'
@@ -65,7 +74,9 @@ class SendspaceClient(object):
         form_details = {'MAX_FILE_SIZE': max_file_size, 'UPLOAD_IDENTIFIER': upload_identifier,
                         'extra_info': extra_info, 'notify_uploader': 0}
         file = {'userfile': (filename, file)}
-        post_request(url, data=form_details, files=file, expect_xml_response=False)
+        response = post_request(url, data=form_details, files=file, expect_xml_response=False)
+        file_id = find_between(response, 'file_id=', '\n')
+        return file_id
 
     def delete_file(self, file_id):
         payload = {
@@ -108,6 +119,15 @@ class SendspaceClient(object):
         payload = {
             'method': 'folders.delete',
             'folder_id': folder_id,
+            'session_key': self._session_key
+        }
+        post_request(self._API_URL, params=payload)
+
+    def move_file_to_folder(self, file_id, folder_id):
+        payload = {
+            'method': 'files.moveToFolder',
+            'folder_id': folder_id,
+            'file_id': file_id,
             'session_key': self._session_key
         }
         post_request(self._API_URL, params=payload)
