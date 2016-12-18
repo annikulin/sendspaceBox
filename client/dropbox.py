@@ -16,7 +16,7 @@ def post_request(url, headers=None, json=None, params=None, files=None, data=Non
 def parse_entries(entries, folders, files):
     for entry in entries:
         if entry['.tag'] == 'folder':
-            folders.append(Folder(entry['id'], entry['path_display']))
+            folders.append(Folder(entry['id'], entry['name'], entry['path_display']))
         else:
             files.append(File(entry['id'], entry['name'], entry['path_display']))
     return folders, files

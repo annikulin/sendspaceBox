@@ -6,7 +6,7 @@ import requests
 from client.model import Folder, File
 
 
-def post_request(url, headers=None, json=None, params=None, files=None, data=None):
+def post_request(url, headers=None, json=None, params=None, files=None, data=None, expect_xml_response=True):
     response_xml = requests.post(url, headers=headers, json=json, params=params, files=files, data=data)
 
     if response_xml.status_code != 200:
@@ -14,10 +14,15 @@ def post_request(url, headers=None, json=None, params=None, files=None, data=Non
             response_xml.status_code, response_xml.reason, response_xml.content)
         raise Exception(http_error_msg)
 
-    response = ET.fromstring(response_xml.content)
-    if response.attrib['status'] != 'ok':
-        raise Exception('Sendspace API request failed. Reason: %s. Info: %s' % (
-            response[0].attrib['text'], response[0].attrib['info']))
+    if expect_xml_response:
+        response = ET.fromstring(response_xml.content)
+        if response.attrib['status'] != 'ok':
+            raise Exception('Sendspace API request failed. Reason: %s. Info: %s' % (
+                response[0].attrib['text'], response[0].attrib['info']))
+    else:
+        response = response_xml.content
+        if 'upload_status=ok' not in response:
+            raise Exception('Sendspace API file upload failed. Info: %s' % response)
 
     return response
 
@@ -60,7 +65,15 @@ class SendspaceClient(object):
         form_details = {'MAX_FILE_SIZE': max_file_size, 'UPLOAD_IDENTIFIER': upload_identifier,
                         'extra_info': extra_info, 'notify_uploader': 0}
         file = {'userfile': (filename, file)}
-        post_request(url, data=form_details, files=file)
+        post_request(url, data=form_details, files=file, expect_xml_response=False)
+
+    def delete_file(self, file_id):
+        payload = {
+            'method': 'files.delete',
+            'file_id': file_id,
+            'session_key': self._session_key
+        }
+        post_request(self._API_URL, params=payload)
 
     def get_folder_content(self, folder_id=0):
         payload = {
@@ -72,7 +85,29 @@ class SendspaceClient(object):
         folders, files = [], []
         for entry in response:
             if entry.tag == 'folder':
-                folders.append(Folder(entry.attrib['id'], entry.attrib['name']))
-            else:
-                files.append(File(entry.attrib['id'], entry.attrib['name'], entry.attrib['folder_id']))
+                folder = Folder(entry.attrib['id'], entry.attrib['name'])
+                folder.sendspace_id = entry.attrib['id']
+                folders.append(folder)
+            elif entry.tag == 'file':
+                file = File(entry.attrib['id'], entry.attrib['name'])
+                file.sendspace_folder_id = entry.attrib['folder_id']
+                files.append(file)
         return folders, files
+
+    def create_folder(self, name, parent_folder_id=0):
+        payload = {
+            'method': 'folders.create',
+            'name': name,
+            'parent_folder_id': parent_folder_id,
+            'session_key': self._session_key
+        }
+        response = post_request(self._API_URL, params=payload)
+        return response[0].attrib['id']
+
+    def delete_folder(self, folder_id):
+        payload = {
+            'method': 'folders.delete',
+            'folder_id': folder_id,
+            'session_key': self._session_key
+        }
+        post_request(self._API_URL, params=payload)
