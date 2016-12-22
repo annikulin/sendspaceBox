@@ -36,7 +36,7 @@ class DropboxClient(object):
         url = self._build_url('download', is_content_url=True)
         headers = self._build_headers({'Dropbox-API-Arg': '{"path": "%s"}' % path})
 
-        return post_request(url, headers=headers, stream=True).raw
+        return post_request(url, headers=headers, stream=True)
 
     def list_folder(self, path='/', recursive=False):
         url = self._build_url('list_folder')

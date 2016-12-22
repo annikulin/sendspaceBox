@@ -1,14 +1,14 @@
 import hashlib
 import xml.etree.ElementTree as ET
 
-from requests_toolbelt import MultipartEncoder
 import requests
+from requests_toolbelt import MultipartEncoder
 
 from client.model import Folder, File
 
 
-def post_request(url, headers=None, json=None, params=None, files=None, data=None, expect_xml_response=True):
-    response_xml = requests.post(url, headers=headers, json=json, params=params, files=files, data=data)
+def post_request(url, expect_xml_response=True, **kwargs):
+    response_xml = requests.post(url, **kwargs)
 
     if response_xml.status_code != 200:
         http_error_msg = '%s %s Error message: %s' % (
@@ -63,7 +63,7 @@ class SendspaceClient(object):
         response = post_request(self._API_URL, params=payload)
         self._session_key = response[0].text
 
-    def upload(self, filename, file_stream):
+    def upload(self, filename, file_stream_response):
         payload = {'method': 'upload.getinfo', 'session_key': self._session_key}
         response = post_request(self._API_URL, params=payload)
 
@@ -76,10 +76,11 @@ class SendspaceClient(object):
             'MAX_FILE_SIZE': max_file_size,
             'UPLOAD_IDENTIFIER': upload_identifier,
             'extra_info': extra_info,
-            'userfile': (filename, file_stream.read()),
+            'userfile': (filename, DownloadStreamAdapter(file_stream_response), 'application/octet-stream'),
             'notify_uploader': '0'
         })
-        response = post_request(url, data=form_details, expect_xml_response=False, headers={'Content-Type': form_details.content_type})
+
+        response = post_request(url, expect_xml_response=False, data=form_details, headers={'Content-Type': form_details.content_type}, stream=True)
         file_id = find_between(response, 'file_id=', '\n')
         return file_id
 
@@ -136,3 +137,19 @@ class SendspaceClient(object):
             'session_key': self._session_key
         }
         post_request(self._API_URL, params=payload)
+
+
+class DownloadStreamAdapter(object):
+    def __init__(self, response):
+        self._response = response
+        self._length = int(self._response.headers['content-length'])
+        print "LENGTH {}".format(self._length)
+        print response.headers
+
+    @property
+    def len(self):
+        return self._length
+
+    def read(self, chunk_size):
+        self._length -= chunk_size
+        return self._response.raw.read(chunk_size)
