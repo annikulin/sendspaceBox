@@ -1,6 +1,7 @@
 import json
 import requests
-from model import File, Folder
+
+from client.model import Folder, File
 
 
 def post_request(url, headers=None, json=None, params=None, files=None, data=None, stream=False):
@@ -53,7 +54,7 @@ class DropboxClient(object):
             'include_deleted': False,
             'include_has_explicit_shared_members': False
         }
-        json_response = post_request(url, headers=headers, json=data).content
+        json_response = post_request(url, headers=headers, json=data).text
         response = json.loads(json_response)
 
         folders, files = parse_entries(response['entries'], [], [])

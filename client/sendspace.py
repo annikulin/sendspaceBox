@@ -12,16 +12,16 @@ def post_request(url, expect_xml_response=True, **kwargs):
 
     if response_xml.status_code != 200:
         http_error_msg = '%s %s Error message: %s' % (
-            response_xml.status_code, response_xml.reason, response_xml.content)
+            response_xml.status_code, response_xml.reason, response_xml.text)
         raise Exception(http_error_msg)
 
     if expect_xml_response:
-        response = ET.fromstring(response_xml.content)
+        response = ET.fromstring(response_xml.text)
         if response.attrib['status'] != 'ok':
             raise Exception('Sendspace API request failed. Reason: %s. Info: %s' % (
                 response[0].attrib['text'], response[0].attrib['info']))
     else:
-        response = response_xml.content
+        response = response_xml.text
         if 'upload_status=ok' not in response:
             raise Exception('Sendspace API file upload failed. Info: %s' % response)
 
@@ -57,7 +57,9 @@ class SendspaceClient(object):
         token = response[0].text
 
         # lowercase(md5(token+lowercase(md5(password))))
-        tokened_password = hashlib.md5(token + hashlib.md5(self._password).hexdigest().lower()).hexdigest().lower()
+        token = token.encode('utf-8')
+        password = self._password.encode('utf-8')
+        tokened_password = hashlib.md5(token + hashlib.md5(password).hexdigest().lower().encode('utf-8')).hexdigest().lower()
         payload = {'method': 'auth.login', 'token': token, 'api_version': self._API_VERSION,
                    'user_name': self._username, 'tokened_password': tokened_password}
         response = post_request(self._API_URL, params=payload)
@@ -143,8 +145,6 @@ class DownloadStreamAdapter(object):
     def __init__(self, response):
         self._response = response
         self._length = int(self._response.headers['content-length'])
-        print "LENGTH {}".format(self._length)
-        print response.headers
 
     @property
     def len(self):
