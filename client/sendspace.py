@@ -18,8 +18,10 @@ def post_request(url, expect_xml_response=True, **kwargs):
     if expect_xml_response:
         response = ET.fromstring(response_xml.text)
         if response.attrib['status'] != 'ok':
-            raise Exception('Sendspace API request failed. Reason: %s. Info: %s' % (
-                response[0].attrib['text'], response[0].attrib['info']))
+            message = 'Sendspace API request failed. Reason: %s' % (response[0].attrib['text'])
+            if 'info' in response[0].attrib:
+                message = "%s %s" % (message, 'Info: %s' % (response[0].attrib['info']))
+            raise Exception(message)
     else:
         response = response_xml.text
         if 'upload_status=ok' not in response:

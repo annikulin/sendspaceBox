@@ -2,13 +2,16 @@ import json
 import requests
 from flask import Flask, render_template, request, session, url_for
 
+from client import DropboxClient, DropboxSendspaceSync, SendspaceClient
+
 app = Flask(__name__)
 
 
 @app.route('/')
 def index():
     if 'access_token' not in session:
-        return render_template('login.html', redirect_url=url_for('authorized', _external=True), client_id = app.config['DROPBOX_APP_ID'])
+        return render_template('login.html', redirect_url=url_for('authorized', _external=True),
+                               client_id=app.config['DROPBOX_APP_ID'])
     return render_template('index.html')
 
 
@@ -34,7 +37,22 @@ def authorized():
 @app.route('/logout')
 def logout():
     session.pop('access_token', None)
-    return render_template('login.html', redirect_url=url_for('authorized', _external=True), client_id = app.config['DROPBOX_APP_ID'])
+    return render_template('login.html', redirect_url=url_for('authorized', _external=True),
+                           client_id=app.config['DROPBOX_APP_ID'])
+
+
+@app.route('/sync', methods=['POST'])
+def sync():
+    sendspace_username = request.form.get('sendspace_username')
+    sendspace_password = request.form.get('sendspace_password')
+    sendspace_key = request.form.get('sendspace_key')
+
+    dropbox_client = DropboxClient(session['access_token'])
+    sendspace_client = SendspaceClient(sendspace_key, sendspace_username, sendspace_password)
+    sync = DropboxSendspaceSync(dropbox_client, sendspace_client)
+    sync.sync_files()
+
+    return render_template('index.html')
 
 
 if __name__ == '__main__':
