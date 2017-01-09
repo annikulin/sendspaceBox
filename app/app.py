@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, session, url_for
 from client import DropboxClient, DropboxSendspaceSync, SendspaceClient
 
 app = Flask(__name__)
+sync_processes = dict()
 
 
 @app.route('/')
@@ -12,7 +13,14 @@ def index():
     if 'access_token' not in session:
         return render_template('login.html', redirect_url=url_for('authorized', _external=True),
                                client_id=app.config['DROPBOX_APP_ID'])
-    return render_template('index.html')
+
+    synced_files_before = session['access_token'] in sync_processes
+    if synced_files_before:
+        finished_previous_sync = sync_processes[session['access_token']].done()
+    else:
+        finished_previous_sync = False
+
+    return render_template('index.html', synced_files_before=synced_files_before, finished_previous_sync=finished_previous_sync)
 
 
 @app.route('/authorized')
@@ -31,7 +39,7 @@ def authorized():
         raise Exception('Something went wrong :(')
     session['access_token'] = json.loads(response.text)['access_token']
 
-    return render_template('index.html')
+    return index()
 
 
 @app.route('/logout')
@@ -51,8 +59,9 @@ def sync():
     sendspace_client = SendspaceClient(sendspace_key, sendspace_username, sendspace_password)
     sync = DropboxSendspaceSync(dropbox_client, sendspace_client)
     sync.sync_files()
+    sync_processes[session['access_token']] = sync
 
-    return render_template('index.html')
+    return index()
 
 
 if __name__ == '__main__':

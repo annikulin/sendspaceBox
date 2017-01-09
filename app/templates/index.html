@@ -5,14 +5,26 @@
     <title>sendspaceBox</title>
 </head>
 <body>
-<h1>Everything is fine!</h1>
 
+{% if not synced_files_before %}
+<h1>Sync files between Dropbox and Sendspace</h1>
+{% else %}
+    {% if finished_previous_sync %}
+        <h1>Your previous sync finished. You can start it again if you want.</h1>
+    {% else %}
+        <h1>The sync process is in progress. Please, wait...</h1>
+    {% endif %}
+{% endif %}
+
+
+{% if not synced_files_before or finished_previous_sync %}
 <form action="/sync" method="post">
     Username: <input type="text" name="sendspace_username"><br>
     Password: <input type="text" name="sendspace_password"><br>
     Key: <input type="text" name="sendspace_key"><br>
     <input type="submit" value="Sync files"><br>
 </form>
+{% endif %}
 <br>
 <a href="/logout">Logout</a>
 </body>
