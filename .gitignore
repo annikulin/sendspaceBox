@@ -90,3 +90,6 @@ ENV/
 
 # IntelijIdea
 .idea/
+
+# Config files
+app/config.py
