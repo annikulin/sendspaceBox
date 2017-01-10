@@ -9,10 +9,12 @@ class DropboxSendspaceSync(object):
         self._sendspace = sendspace
 
         self.errors = list()
+        self.logs = list()
         self.futures = list()
 
     def sync_files(self):
         self.errors.clear()
+        self.logs.clear()
         self.futures.clear()
 
         self._executor = ThreadPoolExecutor(max_workers=10)
@@ -22,10 +24,8 @@ class DropboxSendspaceSync(object):
         future = self._executor.submit(self._sync_folder, root_folder)
         self.futures.append(future)
 
-        self._executor.shutdown(wait=False)
-
     def _sync_folder(self, folder):
-        print('Syncing {}'.format(folder))
+        self.logs.append('Syncing {}'.format(folder))
         try:
             dropbox_folders, dropbox_files = self._dropbox.list_folder(folder.path)
             sendspace_folders, sendspace_files = self._sendspace.get_folder_content(folder.sendspace_id)
@@ -41,7 +41,7 @@ class DropboxSendspaceSync(object):
     def _sync_folders(self, dropbox_folders, sendspace_folders, current_folder):
         for folder in dropbox_folders:
             if folder not in sendspace_folders:
-                print('[CREATE] {}'.format(folder))
+                self.logs.append('Creating {}'.format(folder))
                 folder_id = self._sendspace.create_folder(folder.name, parent_folder_id=current_folder.sendspace_id)
                 folder.sendspace_id = folder_id
             else:
@@ -50,7 +50,7 @@ class DropboxSendspaceSync(object):
                 sendspace_folders.remove(matches[0])
 
         for folder in sendspace_folders:
-            print('[DELETE] {}'.format(folder))
+            self.logs.append('Deleting {}'.format(folder))
             self._sendspace.delete_folder(folder.sendspace_id)
 
         return dropbox_folders
@@ -69,14 +69,14 @@ class DropboxSendspaceSync(object):
             self.futures.append(future)
 
     def _delete_file(self, file_to_delete):
-        print('[DELETE] {}'.format(file_to_delete))
+        self.logs.append('Deleting {}'.format(file_to_delete))
         try:
             self._sendspace.delete_file(file_to_delete.id)
         except Exception as e:
             self.errors.append('Failed to delete file: %s. Error: %s' % (file_to_delete, str(e)))
 
     def _create_file(self, file_to_create):
-        print('[CREATE] {}'.format(file_to_create))
+        self.logs.append('Creating {}'.format(file_to_create))
         try:
             file_stream = self._dropbox.download(file_to_create.path)
             file_id = self._sendspace.upload(file_to_create.name, file_stream)
@@ -88,4 +88,5 @@ class DropboxSendspaceSync(object):
         for future in self.futures:
             if not future.done():
                 return False
+        self._executor.shutdown()
         return True

@@ -16,9 +16,34 @@
                 <div class="alert alert-info" role="alert">To start syncing files from Dropbox to Sendspace fill in your Sendspace credentials below and click 'Sync files' button.</div>
             {% else %}
                 {% if finished_previous_sync %}
-                    <div class="alert alert-success" role="alert">Your previous sync finished. You can start it again if you want.</div>
+                    {% if errors %}
+                        <div class="panel panel-danger">
+                            <div class="panel-heading">Previous sync finished with errors. You can start it again to fix the problem.</div>
+                            <ul class="list-group">
+                                {% for error in errors %}
+                                    <li class="list-group-item">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="panel panel-success">
+                            <div class="panel-heading">Previous sync successfully finished (without errors). You can start it again if you want.</div>
+                            <ul class="list-group">
+                                {% for log in logs %}
+                                    <li class="list-group-item">{{ log }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
                 {% else %}
-                    <div class="alert alert-warning" role="alert">The sync process is in progress. Please, wait... <a href="/" class="pull-right">Refresh status</a></div>
+                    <div class="panel panel-warning">
+                        <div class="panel-heading">Sync is in progress. Please, wait... <a href="/" class="pull-right">Refresh status</a></div>
+                        <ul class="list-group">
+                            {% for log in logs %}
+                                <li class="list-group-item">{{ log }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 {% endif %}
             {% endif %}
 

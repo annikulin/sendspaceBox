@@ -17,10 +17,14 @@ def index():
     synced_files_before = session['access_token'] in sync_processes
     if synced_files_before:
         finished_previous_sync = sync_processes[session['access_token']].done()
+        errors = sync_processes[session['access_token']].errors
+        logs = sync_processes[session['access_token']].logs
     else:
-        finished_previous_sync = False
+        finished_previous_sync, errors, logs = False, list(), list()
 
-    return render_template('index.html', synced_files_before=synced_files_before, finished_previous_sync=finished_previous_sync)
+
+    return render_template('index.html', synced_files_before=synced_files_before,
+                           finished_previous_sync=finished_previous_sync, errors=errors, logs=logs)
 
 
 @app.route('/authorized')
