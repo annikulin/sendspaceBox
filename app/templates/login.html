@@ -3,9 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>sendspaceBox</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 </head>
 <body>
-<h1>Please, log in first</h1>
-<a href="https://www.dropbox.com/1/oauth2/authorize?client_id={{ client_id }}&response_type=code&redirect_uri={{ redirect_url }}">Login
-    with Dropbox</a>
+    <div class="container" style="width: 800px">
+        <div class="page-header">
+            <h1>sendspaceBox <a href="https://www.dropbox.com/1/oauth2/authorize?client_id={{ client_id }}&response_type=code&redirect_uri={{ redirect_url }}" class="btn btn-info pull-right">Login with Dropbox</a></h1>
+        </div>
+        <div class="row">
+            <div class="alert alert-warning" role="alert">Please, login first in order to use the service.</div>
+        </div>
+    </div>
 </body>
