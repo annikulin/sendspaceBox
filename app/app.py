@@ -43,7 +43,8 @@ def authorized():
     }
     response = requests.post('https://api.dropboxapi.com/1/oauth2/token', params=params)
     if response.status_code != 200:
-        raise Exception('Something went wrong :(')
+        http_error_msg = '%s %s Error message: %s' % (response.status_code, response.reason, response.text)
+        raise Exception(http_error_msg)
     session['access_token'] = json.loads(response.text)['access_token']
 
     return index()
