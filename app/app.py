@@ -1,7 +1,10 @@
 import json
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 import requests
 from flask import Flask, render_template, request, session, url_for
-
 from client import DropboxClient, DropboxSendspaceSync, SendspaceClient
 
 app = Flask(__name__)
@@ -70,4 +73,5 @@ def sync():
 
 if __name__ == '__main__':
     app.config.from_pyfile('config.py')
-    app.run()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
