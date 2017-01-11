@@ -72,6 +72,15 @@ def sync():
 
 
 if __name__ == '__main__':
-    app.config.from_pyfile('config.py')
+    if os.path.exists('config.py'):
+        app.config.from_pyfile('config.py')
+    else:
+        app.config.from_mapping({
+            'SECRET_KEY': os.environ['SECRET_KEY'],
+            'SESSION_TYPE': os.environ['SESSION_TYPE'],
+            'DROPBOX_APP_ID': os.environ['DROPBOX_APP_ID'],
+            'DROPBOX_APP_SECRET': os.environ['DROPBOX_APP_SECRET']
+        })
+
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
