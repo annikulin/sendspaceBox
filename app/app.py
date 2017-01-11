@@ -39,7 +39,7 @@ def authorized():
         'grant_type': 'authorization_code',
         'client_id': app.config['DROPBOX_APP_ID'],
         'client_secret': app.config['DROPBOX_APP_SECRET'],
-        'redirect_uri': url_for('authorized', _external=True)
+        'redirect_uri': url_for('authorized', _external=True, _scheme='https')
     }
     response = requests.post('https://api.dropboxapi.com/1/oauth2/token', params=params)
     if response.status_code != 200:
