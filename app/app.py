@@ -14,7 +14,7 @@ sync_processes = dict()
 @app.route('/')
 def index():
     if 'access_token' not in session:
-        return render_template('login.html', redirect_url=url_for('authorized', _external=True),
+        return render_template('login.html', redirect_url=url_for('authorized', _external=True, _scheme='https'),
                                client_id=app.config['DROPBOX_APP_ID'])
 
     synced_files_before = session['access_token'] in sync_processes
@@ -53,7 +53,7 @@ def authorized():
 @app.route('/logout')
 def logout():
     session.pop('access_token', None)
-    return render_template('login.html', redirect_url=url_for('authorized', _external=True),
+    return render_template('login.html', redirect_url=url_for('authorized', _external=True, _scheme='https'),
                            client_id=app.config['DROPBOX_APP_ID'])
 
 
